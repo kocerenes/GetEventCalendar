@@ -16,6 +16,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.ekocer.geteventcalendar.databinding.FragmentGetEventBinding
+import com.ekocer.geteventcalendar.model.GetEventModel
 import com.ekocer.geteventcalendar.util.Constants.PREF_ACCOUNT_NAME
 import com.ekocer.geteventcalendar.util.Constants.REQUEST_ACCOUNT_PICKER
 import com.ekocer.geteventcalendar.util.Constants.REQUEST_AUTHORIZATION
@@ -42,9 +43,10 @@ class GetEventFragment : Fragment() {
     private var _binding: FragmentGetEventBinding? = null
     private val binding get() = _binding!!
 
-    private var mService: Calendar? = null
 
-    var mCredential: GoogleAccountCredential? = null
+    private var mCredential: GoogleAccountCredential? = null //hesabımıza erişim için
+    private var mService: Calendar? = null //Takvime erişim için
+
     var mProgress: ProgressDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,7 +119,7 @@ class GetEventFragment : Fragment() {
         initCalendarBuild(mCredential)
     }
 
-    fun initCalendarBuild(credential: GoogleAccountCredential?) {
+    private fun initCalendarBuild(credential: GoogleAccountCredential?) {
         val transport = AndroidHttp.newCompatibleTransport()
         val jsonFactory = JacksonFactory.getDefaultInstance()
         mService = Calendar.Builder(
@@ -129,16 +131,12 @@ class GetEventFragment : Fragment() {
 
     private fun getResultsFromApi() {
         if (!isGooglePlayServicesAvailable()) {
-            Log.d("MainActivity", "a")
             acquireGooglePlayServices()
         } else if (mCredential!!.selectedAccountName == null) {
-            Log.d("MainActivity", "b")
             chooseAccount()
         } else if (!isDeviceOnline()) {
-            Log.d("MainActivity", "c")
             binding.txtOut.text = "No network connection available."
         } else {
-            Log.d("MainActivity", "d")
             makeRequestTask()
         }
     }
@@ -187,7 +185,7 @@ class GetEventFragment : Fragment() {
         return connectionStatusCode == ConnectionResult.SUCCESS
     }
 
-    //erişim izni istiyor
+    //Cihazın Google play servislerini destekleyip desteklemediğini kontrol ediyor
     private fun acquireGooglePlayServices() {
         val apiAvailability = GoogleApiAvailability.getInstance()
         val connectionStatusCode = apiAvailability.isGooglePlayServicesAvailable(requireContext())

@@ -1,4 +1,4 @@
-package com.ekocer.geteventcalendar
+package com.ekocer.geteventcalendar.model
 
 data class GetEventModel(
     var id: Int = 0,
