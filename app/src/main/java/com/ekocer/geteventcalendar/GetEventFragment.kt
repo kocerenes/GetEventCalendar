@@ -1,4 +1,5 @@
 package com.ekocer.geteventcalendar
+import com.google.common.io.Resources
 
 import android.Manifest
 import android.accounts.AccountManager
@@ -25,18 +26,31 @@ import com.ekocer.geteventcalendar.util.Constants.REQUEST_PERMISSION_GET_ACCOUNT
 import com.ekocer.geteventcalendar.util.executeAsyncTask
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
+//import com.google.android.gms.common.Scopes.*
+import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.extensions.android.http.AndroidHttp
+import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp
+import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver
+import com.google.api.client.googleapis.auth.oauth2.*
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
+import com.google.api.client.googleapis.media.*
+import com.google.api.client.http.*
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.client.util.DateTime
 import com.google.api.client.util.ExponentialBackOff
+import com.google.api.client.util.store.FileDataStoreFactory
 import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.CalendarScopes
 import kotlinx.coroutines.cancel
 import pub.devrel.easypermissions.EasyPermissions
+import com.google.api.services.calendar.*
+import java.io.File
+import java.io.StringReader
 import java.io.IOException
+
 
 class GetEventFragment : Fragment() {
 
@@ -263,6 +277,22 @@ class GetEventFragment : Fragment() {
                 }
             }
         )
+    }
+
+    @Throws(java.lang.Exception::class)
+    private fun authorize(): Credential? {
+        val fileContent: String = Resources.getResource("/credentials.json").readText()
+
+        val jf = JacksonFactory.getDefaultInstance()
+        val ht = GoogleNetHttpTransport.newTrustedTransport()
+        val gcs = GoogleClientSecrets.load(jf,  StringReader(fileContent))
+
+        val scopes: MutableSet<String> = HashSet()
+        scopes.add(CalendarScopes.CALENDAR)
+        val flow = GoogleAuthorizationCodeFlow.Builder(ht, jf, gcs, scopes)
+            .setDataStoreFactory(FileDataStoreFactory( File(System.getenv("AppData")))).build()
+        // authorize
+        return AuthorizationCodeInstalledApp(flow, LocalServerReceiver()).authorize("user")
     }
 
     fun getDataFromCalendar(): MutableList<GetEventModel> {
